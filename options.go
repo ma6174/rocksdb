@@ -13,11 +13,16 @@ const (
 	SnappyCompression = CompressionOpt(1)
 )
 
+// BlockBasedOptions represent all Block-based table related options
+type BlockBasedOptions struct {
+	Opt *C.rocksdb_block_based_table_options_t
+}
+
 // Options represent all of the available options when opening a database with
 // Open. Options should be created with NewOptions.
 //
 // It is usually with to call SetCache with a cache object. Otherwise, all
-// data will be read off disk.
+// data will be read off disk. This is now part of BlockBasedOptions
 //
 // To prevent memory leaks, Close must be called on an Options when the
 // program no longer needs it.
@@ -61,6 +66,52 @@ func NewWriteOptions() *WriteOptions {
 	return &WriteOptions{opt}
 }
 
+// NewBlockBasedOptions allocates a new BlockBasedOptions object.
+func NewBlockBasedOptions() *BlockBasedOptions {
+	opt := C.rocksdb_block_based_options_create()
+	return &BlockBasedOptions{opt}
+}
+
+func (o *BlockBasedOptions) Close() {
+	C.rocksdb_block_based_options_destroy(o.Opt)
+}
+
+// SetCache places a cache object in the database when a database is opened.
+//
+// This is usually wise to use. See also ReadOptions.SetFillCache.
+func (o *BlockBasedOptions) SetCache(cache *Cache) {
+	C.rocksdb_block_based_options_set_block_cache(o.Opt, cache.Cache)
+}
+
+// SetBlockSize sets the approximate size of user data packed per block.
+//
+// The default is roughly 4096 uncompressed bytes. A better setting depends on
+// your use case. See the LevelDB documentation for details.
+func (o *BlockBasedOptions) SetBlockSize(s int) {
+	C.rocksdb_block_based_options_set_block_size(o.Opt, C.size_t(s))
+}
+
+func (o *BlockBasedOptions) SetFilterPolicy(fp *FilterPolicy) {
+	var policy *C.rocksdb_filterpolicy_t
+	if fp != nil {
+		policy = fp.Policy
+	}
+	C.rocksdb_block_based_options_set_filter_policy(o.Opt, policy)
+}
+
+// SetBlockRestartInterval is the number of keys between restarts points for
+// delta encoding keys.
+//
+// Most clients should leave this parameter alone. See the LevelDB
+// documentation for details.
+func (o *BlockBasedOptions) SetBlockRestartInterval(n int) {
+	C.rocksdb_block_based_options_set_block_restart_interval(o.Opt, C.int(n))
+}
+
+func (o *Options) SetBlockBasedTableFactory(bbo *BlockBasedOptions) {
+	C.rocksdb_options_set_block_based_table_factory(o.Opt, bbo.Opt)
+}
+
 // Close deallocates the Options, freeing its underlying C struct.
 func (o *Options) Close() {
 	C.rocksdb_options_destroy(o.Opt)
@@ -83,13 +134,6 @@ func (o *Options) SetComparator(cmp *C.rocksdb_comparator_t) {
 func (o *Options) SetErrorIfExists(error_if_exists bool) {
 	eie := boolToUchar(error_if_exists)
 	C.rocksdb_options_set_error_if_exists(o.Opt, eie)
-}
-
-// SetCache places a cache object in the database when a database is opened.
-//
-// This is usually wise to use. See also ReadOptions.SetFillCache.
-func (o *Options) SetCache(cache *Cache) {
-	C.rocksdb_options_set_cache(o.Opt, cache.Cache)
 }
 
 // SetEnv sets the Env object for the new database handle.
@@ -127,23 +171,6 @@ func (o *Options) SetMaxOpenFiles(n int) {
 	C.rocksdb_options_set_max_open_files(o.Opt, C.int(n))
 }
 
-// SetBlockSize sets the approximate size of user data packed per block.
-//
-// The default is roughly 4096 uncompressed bytes. A better setting depends on
-// your use case. See the LevelDB documentation for details.
-func (o *Options) SetBlockSize(s int) {
-	C.rocksdb_options_set_block_size(o.Opt, C.size_t(s))
-}
-
-// SetBlockRestartInterval is the number of keys between restarts points for
-// delta encoding keys.
-//
-// Most clients should leave this parameter alone. See the LevelDB
-// documentation for details.
-func (o *Options) SetBlockRestartInterval(n int) {
-	C.rocksdb_options_set_block_restart_interval(o.Opt, C.int(n))
-}
-
 // SetCompression sets whether to compress blocks using the specified
 // compresssion algorithm.
 //
@@ -171,14 +198,6 @@ func (o *Options) SetMaxBackgroundCompactions(n int) {
 
 func (o *Options) SetMaxBackgroundFlushes(n int) {
 	C.rocksdb_options_set_max_background_flushes(o.Opt, C.int(n))
-}
-
-func (o *Options) SetFilterPolicy(fp *FilterPolicy) {
-	var policy *C.rocksdb_filterpolicy_t
-	if fp != nil {
-		policy = fp.Policy
-	}
-	C.rocksdb_options_set_filter_policy(o.Opt, policy)
 }
 
 // Close deallocates the ReadOptions, freeing its underlying C struct.
