@@ -1,6 +1,5 @@
 package rocksdb
 
-// #cgo LDFLAGS: -lrocksdb
 // #include <stdlib.h>
 // #include "rocksdb/c.h"
 import "C"
@@ -28,5 +27,7 @@ func NewBloomFilter(bitsPerKey int) *FilterPolicy {
 }
 
 func (fp *FilterPolicy) Close() {
-	C.rocksdb_filterpolicy_destroy(fp.Policy)
+	if fp.Policy != nil {
+		C.rocksdb_filterpolicy_destroy(fp.Policy)
+	}
 }

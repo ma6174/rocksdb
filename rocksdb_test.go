@@ -24,15 +24,17 @@ func TestC(t *testing.T) {
 	options := NewOptions()
 	// options.SetComparator(cmp)
 	options.SetErrorIfExists(true)
-	options.SetCache(cache)
 	options.SetEnv(env)
 	options.SetInfoLog(nil)
 	options.SetWriteBufferSize(1 << 20)
 	options.SetParanoidChecks(true)
 	options.SetMaxOpenFiles(10)
-	options.SetBlockSize(1024)
-	options.SetBlockRestartInterval(8)
 	options.SetCompression(NoCompression)
+
+	boptions := NewBlockBasedOptions()
+	boptions.SetCache(cache)
+	boptions.SetBlockSize(1024)
+	boptions.SetBlockRestartInterval(8)
 
 	roptions := NewReadOptions()
 	roptions.SetVerifyChecksums(true)
@@ -179,11 +181,13 @@ func TestC(t *testing.T) {
 	options.SetCreateIfMissing(true)
 	options.SetErrorIfExists(true)
 
-	// filter
-	policy := NewBloomFilter(10)
 	db.Close()
 	DestroyDatabase(dbname, options)
-	options.SetFilterPolicy(policy)
+
+	// filter
+	policy := NewBloomFilter(10)
+	boptions.SetFilterPolicy(policy)
+
 	db, err = Open(dbname, options)
 	if err != nil {
 		t.Fatalf("Unable to recreate db for filter tests: %v", err)
@@ -199,7 +203,6 @@ func TestC(t *testing.T) {
 	db.CompactRange(Range{nil, nil})
 	CheckGet(t, "filter", db, roptions, []byte("foo"), []byte("foovalue"))
 	CheckGet(t, "filter", db, roptions, []byte("bar"), []byte("barvalue"))
-	options.SetFilterPolicy(nil)
 	policy.Close()
 
 	// cleanup

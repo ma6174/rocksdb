@@ -1,0 +1,16 @@
+machine:
+  environment:
+    GOSRC: /home/ubuntu/.go_workspace/src/github.com
+
+dependencies:
+  override:
+    - sudo apt-get install g++
+    - go get github.com/cockroachdb/c-snappy
+    - go get github.com/cockroachdb/c-lz4
+    - test -d $GOSRC/dckit/c-rocksdb || git clone git@github.com:dckit/c-rocksdb.git $GOSRC/dckit/c-rocksdb && cd $GOSRC/dckit/c-rocksdb && go install . || true
+    - test -d $GOSRC/dckit/rocksdb && rm -rf $GOSRC/dckit/rocksdb || true
+    - cp -r ../rocksdb $GOSRC/dckit
+
+test:
+  override:
+    - cd $GOSRC/dckit/rocksdb && go test -v .

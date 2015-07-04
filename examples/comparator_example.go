@@ -1,7 +1,12 @@
 package main
 
+import _ "github.com/cockroachdb/c-rocksdb"
+
 /*
-#cgo LDFLAGS: -lrocksdb
+#cgo CXXFLAGS: -std=c++11
+#cgo CPPFLAGS: -I ../../c-rocksdb/internal/include
+#cgo darwin LDFLAGS: -Wl,-undefined -Wl,dynamic_lookup
+#cgo !darwin LDFLAGS: -Wl,-unresolved-symbols=ignore-all
 #include <string.h>
 #include <rocksdb/c.h>
 
