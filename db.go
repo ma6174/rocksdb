@@ -63,6 +63,7 @@ type Snapshot struct {
 	snap *C.rocksdb_snapshot_t
 }
 
+
 // Open opens a database.
 //
 // Creating a new database is done by calling SetCreateIfMissing(true) on the
@@ -76,6 +77,28 @@ func Open(dbname string, o *Options) (*DB, error) {
 	defer C.free(unsafe.Pointer(ldbname))
 
 	rocksdb := C.rocksdb_open(o.Opt, ldbname, &errStr)
+	if errStr != nil {
+		gs := C.GoString(errStr)
+		C.free(unsafe.Pointer(errStr))
+		return nil, DatabaseError(gs)
+	}
+	return &DB{rocksdb}, nil
+}
+
+// Open opens a database.
+//
+// Creating a new database is done by calling SetCreateIfMissing(true) on the
+// Options passed to Open.
+//
+// It is usually wise to set a Cache object on the Options with SetCache to
+// keep recently used data from that database in memory.
+func OpenForRead(dbname string, if_log_exist_err bool, o *Options) (*DB, error) {
+	var errStr *C.char
+	ldbname := C.CString(dbname)
+	defer C.free(unsafe.Pointer(ldbname))
+	i := boolToUchar(if_log_exist_err)
+
+	rocksdb := C.rocksdb_open_for_read_only(o.Opt, ldbname, i, &errStr)
 	if errStr != nil {
 		gs := C.GoString(errStr)
 		C.free(unsafe.Pointer(errStr))
