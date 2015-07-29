@@ -9,13 +9,11 @@ ROCKSDB
 
 # Install
 
-All dependencies are `go get-able`
+All dependencies are `go get-able`.
+Required g++4.8 or clang > 6.0
 
 ```
-go get github.com/cockroachdb/c-snappy
-go get github.com/cockroachdb/c-lz4
-go get github.com/dckit/c-rocksdb
-go get github.com/dckit/rocksdb
+go get -u github.com/dckit/rocksdb
 ```
 
 
