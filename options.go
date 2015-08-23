@@ -199,6 +199,14 @@ func (o *Options) SetMaxBackgroundFlushes(n int) {
 	C.rocksdb_options_set_max_background_flushes(o.Opt, C.int(n))
 }
 
+func (o *Options) SetAllowMmapReads(b bool) {
+	C.rocksdb_options_set_allow_mmap_reads(o.Opt, boolToUchar(b))
+}
+
+func (o *Options) SetAllowMmapWrites(b bool) {
+	C.rocksdb_options_set_allow_mmap_writes(o.Opt, boolToUchar(b))
+}
+
 // Close deallocates the ReadOptions, freeing its underlying C struct.
 func (ro *ReadOptions) Close() {
 	C.rocksdb_readoptions_destroy(ro.Opt)
